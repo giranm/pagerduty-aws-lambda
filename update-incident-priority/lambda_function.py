@@ -48,7 +48,8 @@ def lambda_handler(event, context):
                         if incident["priority"]["summary"] != ideal_priority["summary"]:
                             update_incident_priority(
                                 incident_id, ideal_priority, pd_api_headers)
-
+                            add_incident_note("Automatically updating incident from {current_priority} to {ideal_priority}".format(
+                                current_priority=incident["priority"]["summary"], ideal_priority=ideal_priority["summary"]), incident_id, pd_api_headers)
                         else:
                             logger.info(
                                 "Incident priority at ideal state - skipping")
@@ -139,8 +140,34 @@ def update_incident_priority(incident_id, priority, pd_api_headers):
         headers=pd_api_headers)
 
     if pd_incident_update_response.status_code == 200:
-        logger.info("Incident successfully updated")
+        logger.info("Successfully updated incident")
 
     else:
         logger.error("Unable to update incident: {}".format(
+            pd_incident_update_response.content))
+
+# Add incident note helper.
+
+
+def add_incident_note(incident_note, incident_id, pd_api_headers):
+    logger.info("Adding incident note: {}".format(incident_note))
+
+    pd_incident_note_url = "{base}/incidents/{id}/notes".format(
+        base=pd_config["API_BASE_URL"],
+        id=incident_id)
+
+    pd_incident_note_payload = {
+        "content": incident_note
+    }
+
+    pd_incident_update_response = requests.post(
+        url=pd_incident_note_url,
+        json=pd_incident_note_payload,
+        headers=pd_api_headers)
+
+    if pd_incident_update_response.status_code == 201:
+        logger.info("Succesfully added note")
+
+    else:
+        logger.error("Unable to add note to incident: {}".format(
             pd_incident_update_response.content))
