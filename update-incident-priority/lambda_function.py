@@ -101,10 +101,10 @@ def get_priority_from_alerts(alerts, pd_api_headers):
     elif any(alert['severity'] != 'critical' and alert['severity'] == 'error' for alert in alerts):
         ideal_priority_summary = "P2"
 
-    elif any(alert['severity'] != 'critical' and alert['severity'] != 'error' and alert['severity'] == 'warn' for alert in alerts):
+    elif any(alert['severity'] != 'critical' and alert['severity'] != 'error' and alert['severity'] == 'warning' for alert in alerts):
         ideal_priority_summary = "P3"
 
-    elif any(alert['severity'] != 'critical' and alert['severity'] != 'error' and alert['severity'] != 'warn' for alert in alerts):
+    elif any(alert['severity'] != 'critical' and alert['severity'] != 'error' and alert['severity'] != 'warning' for alert in alerts):
         ideal_priority_summary = "P4"
 
     logger.info("Ideal priority for incident ({id}) should be {priority}".format(
