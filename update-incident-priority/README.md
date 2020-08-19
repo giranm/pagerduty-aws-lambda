@@ -1,3 +1,3 @@
-# Priority-based Response Play
+# Update Incident Priority
 
-Webhook to automatically trigger a specific response play depending on incident priority.
+Helper function to automatically update incident priority depending on alert severity.
