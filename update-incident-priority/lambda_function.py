@@ -45,11 +45,12 @@ def lambda_handler(event, context):
                         # Determine the ideal priority state and if incident should be updated.
                         ideal_priority = get_priority_from_alerts(
                             alerts, pd_api_headers)
-                        if incident["priority"]["summary"] != ideal_priority["summary"]:
+                        if not incident["priority"] \
+                                or incident["priority"]["summary"] != ideal_priority["summary"]:
                             update_incident_priority(
                                 incident_id, ideal_priority, pd_api_headers)
                             add_incident_note("Automatically updating incident from {current_priority} to {ideal_priority}".format(
-                                current_priority=incident["priority"]["summary"], ideal_priority=ideal_priority["summary"]), incident_id, pd_api_headers)
+                                current_priority=incident["priority"]["summary"] if incident["priority"] else "N/A", ideal_priority=ideal_priority["summary"]), incident_id, pd_api_headers)
                         else:
                             logger.info(
                                 "Incident priority at ideal state - skipping")
@@ -92,20 +93,18 @@ def get_alerts_from_incident(incident_id, pd_api_headers):
 def get_priority_from_alerts(alerts, pd_api_headers):
 
     # Use a default priority as as fallback.
-    ideal_priority_summary = "P3"
+    ideal_priority_summary = "P4"
 
-    # Work through each alert and determine if any of the criticality matches - assign priority as needed.
-    if any(alert['severity'] == 'critical' for alert in alerts):
-        ideal_priority_summary = "P1"
-
-    elif any(alert['severity'] != 'critical' and alert['severity'] == 'error' for alert in alerts):
-        ideal_priority_summary = "P2"
-
-    elif any(alert['severity'] != 'critical' and alert['severity'] != 'error' and alert['severity'] == 'warning' for alert in alerts):
-        ideal_priority_summary = "P3"
-
-    elif any(alert['severity'] != 'critical' and alert['severity'] != 'error' and alert['severity'] != 'warning' for alert in alerts):
+    # Determine ideal priority based on number of alerts.
+    num_alerts = len(alerts)
+    if num_alerts <= 2:
         ideal_priority_summary = "P4"
+    elif num_alerts > 2 and num_alerts <= 5:
+        ideal_priority_summary = "P3"
+    elif num_alerts > 5 and num_alerts <= 10:
+        ideal_priority_summary = "P2"
+    elif num_alerts > 10:
+        ideal_priority_summary = "P1"
 
     logger.info("Ideal priority for incident ({id}) should be {priority}".format(
         id=alerts[0]["incident"]["id"], priority=ideal_priority_summary))
